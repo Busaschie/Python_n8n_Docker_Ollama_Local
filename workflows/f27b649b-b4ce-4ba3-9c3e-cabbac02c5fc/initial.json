@@ -1,0 +1,94 @@
+{
+    "name": "f27b649b-b4ce-4ba3-9c3e-cabbac02c5fc",
+    "nodes": [
+        {
+            "name": "template_research",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                150,
+                150
+            ],
+            "credentials": {},
+            "webhookMethods": {
+                "POST": "webhook"
+            },
+            "webhook": "/f27b649b-b4ce-4ba3-9c3e-cabbac02c5fc",
+            "responseMode": "lastNode",
+            "httpMethod": "POST"
+        },
+        {
+            "name": "expertise_and_validation",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                150,
+                300
+            ],
+            "credentials": {},
+            "webhookMethods": {
+                "POST": "webhook"
+            },
+            "webhook": "/expertise_and_validation",
+            "responseMode": "lastNode",
+            "httpMethod": "POST"
+        },
+        {
+            "name": "simulation_and_expectation",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                150,
+                450
+            ],
+            "credentials": {},
+            "webhookMethods": {
+                "POST": "webhook"
+            },
+            "webhook": "/simulation_and_expectation",
+            "responseMode": "lastNode",
+            "httpMethod": "POST"
+        },
+        {
+            "name": "output_result",
+            "type": "n8n-nodes-base.function",
+            "typeVersion": 1,
+            "position": [
+                150,
+                600
+            ],
+            "credentials": {},
+            "functionCode": "return {\n  json: {\n    result: 'Workflow completed successfully'\n  }\n};"
+        }
+    ],
+    "connections": {
+        "template_research": {
+            "main": [
+                {
+                    "node": "expertise_and_validation",
+                    "type": "main",
+                    "index": 0
+                }
+            ]
+        },
+        "expertise_and_validation": {
+            "main": [
+                {
+                    "node": "simulation_and_expectation",
+                    "type": "main",
+                    "index": 0
+                }
+            ]
+        },
+        "simulation_and_expectation": {
+            "main": [
+                {
+                    "node": "output_result",
+                    "type": "main",
+                    "index": 0
+                }
+            ]
+        }
+    },
+    "settings": {}
+}

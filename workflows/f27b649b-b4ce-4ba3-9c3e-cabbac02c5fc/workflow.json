@@ -1,0 +1,77 @@
+{
+    "name": "f27b649b-b4ce-4ba3-9c3e-cabbac02c5fc",
+    "nodes": [
+        {
+            "name": "manual_trigger",
+            "type": "n8n-nodes-base.manualTrigger",
+            "typeVersion": 1,
+            "position": [
+                150,
+                300
+            ],
+            "parameters": {},
+            "id": "e35bd185-e16b-4479-9335-ff79ac04856c"
+        },
+        {
+            "name": "code_node",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                350,
+                300
+            ],
+            "credentials": {},
+            "parameters": {},
+            "id": "2c0f33cc-a98d-465c-be82-2e6989dda127",
+            "retryOnFail": true,
+            "maxTries": 2,
+            "waitBetweenTries": 2000,
+            "onError": "continueRegularOutput",
+            "alwaysOutputData": true
+        },
+        {
+            "name": "summary_node",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                550,
+                300
+            ],
+            "credentials": {},
+            "parameters": {},
+            "id": "3b2aa499-b30f-4289-9c72-2572db6dc9b6",
+            "retryOnFail": true,
+            "maxTries": 2,
+            "waitBetweenTries": 2000,
+            "onError": "continueRegularOutput",
+            "alwaysOutputData": true
+        }
+    ],
+    "connections": {
+        "manual_trigger": {
+            "main": [
+                [
+                    {
+                        "node": "code_node",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "code_node": {
+            "main": [
+                [
+                    {
+                        "node": "summary_node",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "settings": {
+        "saveManualExecutions": true
+    }
+}

@@ -1,0 +1,182 @@
+{
+    "name": "c98d54d7-806c-47d5-af43-a13b3903bc0e",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "c98d54d7-806c-47d5-af43-a13b3903bc0e",
+                "responseMode": "lastNode",
+                "responseData": "firstEntryJson"
+            },
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 2.1,
+            "position": [
+                0,
+                0
+            ],
+            "name": "webhook_trigger",
+            "notes": "Receives the initial POST request and returns the final summary response.",
+            "notesInFlow": true,
+            "onError": "stopWorkflow",
+            "alwaysOutputData": true
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "## Task\nProduce the exact question that must be sent to the second LLM node.\n\n## Required output\nReply only with: Reply only with 'YES' if you received this question.",
+                "hasOutputParser": false
+            },
+            "type": "@n8n/n8n-nodes-langchain.chainLlm",
+            "typeVersion": 1.9,
+            "position": [
+                320,
+                0
+            ],
+            "name": "first_llm_node",
+            "notes": "Creates the exact confirmation question for the second LLM node.",
+            "notesInFlow": true,
+            "onError": "stopWorkflow",
+            "alwaysOutputData": true
+        },
+        {
+            "parameters": {
+                "model": {
+                    "mode": "id",
+                    "value": "gpt-5-mini"
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+            "typeVersion": 1.3,
+            "position": [
+                320,
+                180
+            ],
+            "name": "first_openai_model",
+            "notes": "OpenAI chat model provider for the first LLM node.",
+            "notesInFlow": true,
+            "credentials": {
+                "openAiApi": {
+                    "id": "0H1cWobXTnt2Awjp",
+                    "name": "OPENAI"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "## Task\nYou received this question from the first LLM node:\n\n{{ $json.text }}\n\n## Required response\nReply only with `YES`.",
+                "hasOutputParser": false
+            },
+            "type": "@n8n/n8n-nodes-langchain.chainLlm",
+            "typeVersion": 1.9,
+            "position": [
+                660,
+                0
+            ],
+            "name": "second_llm_node",
+            "notes": "Receives the first LLM question and returns the required YES confirmation.",
+            "notesInFlow": true,
+            "onError": "stopWorkflow",
+            "alwaysOutputData": true
+        },
+        {
+            "parameters": {
+                "model": {
+                    "mode": "id",
+                    "value": "gpt-5-mini"
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+            "typeVersion": 1.3,
+            "position": [
+                660,
+                180
+            ],
+            "name": "second_openai_model",
+            "notes": "OpenAI chat model provider for the second LLM node.",
+            "notesInFlow": true,
+            "credentials": {
+                "openAiApi": {
+                    "id": "0H1cWobXTnt2Awjp",
+                    "name": "OPENAI"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "mode": "runOnceForEachItem",
+                "language": "javaScript",
+                "jsCode": "const nodeStatus = {\n  webhook_trigger: { success: false, reason: '' },\n  first_llm_node: { success: false, reason: '' },\n  first_openai_model: { success: false, reason: '' },\n  second_llm_node: { success: false, reason: '' },\n  second_openai_model: { success: false, reason: '' },\n  summary_node: { success: false, reason: '' },\n};\n\nnodeStatus.webhook_trigger.success = true;\nnodeStatus.first_openai_model.success = true;\nnodeStatus.first_llm_node.success = true;\nnodeStatus.second_openai_model.success = true;\n\nconst expectedQuestion = \"Reply only with 'YES' if you received this question.\";\nconst firstQuestion = String($(\"first_llm_node\").item.json.text ?? '').trim();\n\nif (firstQuestion !== expectedQuestion) {\n  nodeStatus.first_llm_node.success = false;\n  nodeStatus.first_llm_node.reason = 'The first LLM response did not exactly match the required question.';\n  console.log(JSON.stringify({ event: 'workflow_validation_failed', node: 'first_llm_node', nodeStatus }));\n  throw new Error(nodeStatus.first_llm_node.reason);\n}\n\nconst answer = String($json.text ?? '').trim();\nif (answer !== 'YES') {\n  nodeStatus.second_llm_node.reason = 'The second LLM response was not exactly YES.';\n  console.log(JSON.stringify({ event: 'workflow_validation_failed', node: 'second_llm_node', answer, nodeStatus }));\n  throw new Error(nodeStatus.second_llm_node.reason);\n}\n\nnodeStatus.second_llm_node.success = true;\nnodeStatus.summary_node.success = true;\n\nconsole.log(JSON.stringify({ event: 'workflow_completed', answer, nodeStatus }));\n\nreturn {\n  json: {\n    answer,\n    node_status: nodeStatus,\n  },\n};"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1000,
+                0
+            ],
+            "name": "summary_node",
+            "notes": "Validates both LLM outputs, records execution success states, and returns the webhook response.",
+            "notesInFlow": true,
+            "onError": "stopWorkflow",
+            "alwaysOutputData": true
+        }
+    ],
+    "connections": {
+        "webhook_trigger": {
+            "main": [
+                [
+                    {
+                        "node": "first_llm_node",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "first_openai_model": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "first_llm_node",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "first_llm_node": {
+            "main": [
+                [
+                    {
+                        "node": "second_llm_node",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "second_openai_model": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "second_llm_node",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "second_llm_node": {
+            "main": [
+                [
+                    {
+                        "node": "summary_node",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "settings": {}
+}
